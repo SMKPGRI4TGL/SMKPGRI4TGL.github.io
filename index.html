@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tabel Pelanggaran</title>
+  <style>
+    /* Gaya untuk Tabel */
+table, th, td {
+  border: 1px solid black;
+  border-collapse: collapse;
+  padding: 8px;
+  text-align: left;
+}
+th {
+  background-color: #f2f2f2;
+}
+
+/* Overlay Pop-up Fullscreen */
+.popup-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+}
+
+/* Popup Fullscreen */
+.popup {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #fff;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  overflow-y: auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+/* Style untuk elemen dalam Popup */
+.popup h3 {
+  font-size: 24px;
+  margin-top: 0;
+  text-align: center;
+}
+.popup input[type="text"],
+.popup input[type="password"],
+.popup input[type="date"],
+.popup select,
+.popup button {
+  display: block;
+  width: 80%;
+  margin: 10px auto;
+  padding: 10px;
+  font-size: 16px;
+}
+
+/* Tombol Tutup Popup */
+.popup button {
+  width: auto;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  font-size: 16px;
+}
+
+.popup button:hover {
+  background-color: #45a049;
+}
+
+/* Gaya untuk Tombol Cari dan Input Pencarian */
+#searchInput {
+  padding: 10px;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+button {
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background-color: #ddd;
+}
+  </style>
+</head>
+<body>
+	<!-- Pop-up Login -->
+<div class="popup-overlay" id="loginOverlay"></div>
+<div class="popup login-popup" id="loginPopup">
+  <h3 class="biji">Login</h3>
+  <input type="text" id="username" placeholder="Username">
+  <input type="password" id="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
+
+
+<h2>Daftar Pelanggaran</h2>
+
+<!-- Kolom Pencarian -->
+<input type="text" id="searchInput" placeholder="Cari Nama Siswa...">
+<button onclick="cariSiswa()">Cari</button>
+
+<!-- Table -->
+<table id="tabelPelanggaran">
+  <tr>
+    <th>Nomor</th>
+    <th>Nama</th>
+    <th>Kelas</th>
+    <th>Tanggal</th>
+    <th>Pelanggaran</th>
+    <th>Keterangan</th>
+    <th>Guru</th>
+    <th>Aksi</th>
+  </tr>
+</table>
+
+<button onclick="tambahBaris()">Tambah Baris</button>
+
+<!-- Pop-up dan Overlay -->
+<div class="popup-overlay" id="popupOverlay" onclick="tutupPopup()"></div>
+<div class="popup" id="popup">
+  <h3>Detail Pelanggaran</h3>
+  <table id="popupTable">
+    <tr>
+      <th>Nama</th>
+      <th>Tanggal</th>
+      <th>Pelanggaran</th>
+    </tr>
+  </table>
+  <button onclick="tutupPopup()">Tutup</button>
+</div>
+
+<script>
+  // Fungsi untuk memuat data dari Local Storage saat halaman dimuat
+  function muatData() {
+    const dataTabel = JSON.parse(localStorage.getItem("dataPelanggaran")) || [];
+    dataTabel.forEach((data) => tambahBaris(data));
+  }
+
+  // Fungsi untuk menyimpan data tabel ke Local Storage
+  function simpanData() {
+    const dataTabel = [];
+    const rows = document.querySelectorAll("#tabelPelanggaran tr");
+    rows.forEach((row, index) => {
+      if (index > 0) { // Lewati baris header
+        const data = {
+          nomor: index,
+          nama: row.cells[1].querySelector("input")?.value || "",
+          kelas: row.cells[2].querySelector("select")?.value || "",
+          tanggal: row.cells[3].querySelector("input")?.value || "",
+          pelanggaran: row.cells[4].querySelector("input")?.value || "",
+          keterangan: row.cells[5].querySelector("select")?.value || "",
+          guru: row.cells[6].querySelector("select")?.value || ""
+        };
+        dataTabel.push(data);
+      }
+    });
+    localStorage.setItem("dataPelanggaran", JSON.stringify(dataTabel));
+  }
+
+  // Fungsi untuk menambahkan baris baru
+  function tambahBaris(data = {}) {
+    const tabel = document.getElementById("tabelPelanggaran");
+    const barisBaru = tabel.insertRow();
+
+    const selNomor = barisBaru.insertCell(0);
+    const selNama = barisBaru.insertCell(1);
+    const selKelas = barisBaru.insertCell(2);
+    const selTanggal = barisBaru.insertCell(3);
+    const selPelanggaran = barisBaru.insertCell(4);
+    const selKeterangan = barisBaru.insertCell(5);
+    const selGuru = barisBaru.insertCell(6);
+    const selAksi = barisBaru.insertCell(7);
+
+    selNomor.textContent = tabel.rows.length - 1;
+    selNama.innerHTML = `<input type="text" placeholder="Nama" value="${data.nama || ""}" onchange="simpanData()">`;
+
+    selKelas.innerHTML = `
+      <select onchange="simpanData()">
+        <option value="">Pilih Kelas</option>
+        <option value="10-RPL" ${data.kelas === "10-RPL" ? "selected" : ""}>10-RPL</option>
+        <option value="10-PM" ${data.kelas === "10-PM" ? "selected" : ""}>10-PM</option>
+        <option value="10-TB" ${data.kelas === "10-TB" ? "selected" : ""}>10-TB</option>
+        <option value="11-RPL" ${data.kelas === "11-RPL" ? "selected" : ""}>11-RPL</option>
+        <option value="11-PM" ${data.kelas === "11-PM" ? "selected" : ""}>11-PM</option>
+        <option value="11-TB" ${data.kelas === "11-TB" ? "selected" : ""}>11-TB</option>
+        <option value="12-RPL 1" ${data.kelas === "12-RPL 1" ? "selected" : ""}>12-RPL 1</option>
+        <option value="12-RPL 2" ${data.kelas === "12-RPL 2" ? "selected" : ""}>12-RPL 2</option>
+        <option value="12-PM" ${data.kelas === "12-PM" ? "selected" : ""}>12-PM</option>
+        <option value="12-TB" ${data.kelas === "12-TB" ? "selected" : ""}>12-TB</option>
+      </select>
+    `;
+    
+    selTanggal.innerHTML = `<input type="date" value="${data.tanggal || ""}" onchange="simpanData()">`;
+    selPelanggaran.innerHTML = `<input type="text" placeholder="Pelanggaran" value="${data.pelanggaran || ""}" onchange="simpanData()">`;
+
+    selKeterangan.innerHTML = `
+      <select onchange="simpanData()">
+        <option value="">Pilih Keterangan</option>
+        <option value="Pembinaan" ${data.keterangan === "Pembinaan" ? "selected" : ""}>Pembinaan</option>
+        <option value="Konsekuensi" ${data.keterangan === "Konsekuensi" ? "selected" : ""}>Konsekuensi</option>
+      </select>
+    `;
+
+    selGuru.innerHTML = `
+      <select onchange="simpanData()">
+        <option value="">Pilih Guru</option>
+        <option value="PAK.UBAI" ${data.guru === "PAK.UBAI" ? "selected" : ""}>PAK.UBAI</option>
+        <option value="PAK.JUNAEDI" ${data.guru === "PAK.JUNAEDI" ? "selected" : ""}>PAK.JUNAEDI</option>
+      </select>
+    `;
+
+    selAksi.innerHTML = `<button onclick="konfirmasiHapus(this)">Hapus</button>`;
+  }
+
+  function konfirmasiHapus(button) {
+    const konfirmasi = confirm("Apakah Anda yakin ingin menghapus data ini?");
+    if (konfirmasi) {
+      hapusBaris(button);
+    }
+  }
+
+  function hapusBaris(button) {
+    const row = button.parentElement.parentElement;
+    row.remove();
+    perbaruiNomor();
+    simpanData();
+  }
+
+  function perbaruiNomor() {
+    const rows = document.querySelectorAll("#tabelPelanggaran tr");
+    rows.forEach((row, index) => {
+      if (index > 0) { 
+        row.cells[0].textContent = index;
+      }
+    });
+  }
+
+  // Fungsi untuk mencari siswa berdasarkan nama
+  function cariSiswa() {
+    const namaCari = document.getElementById("searchInput").value.toLowerCase();
+    const dataTabel = JSON.parse(localStorage.getItem("dataPelanggaran")) || [];
+    const hasilPencarian = dataTabel.filter(data => data.nama.toLowerCase() === namaCari);
+
+    const popupTable = document.getElementById("popupTable");
+    // Hapus semua baris kecuali header
+    while (popupTable.rows.length > 1) {
+      popupTable.deleteRow(1);
+    }
+
+    hasilPencarian.forEach(data => {
+      const row = popupTable.insertRow();
+      row.insertCell(0).textContent = data.nama;
+      row.insertCell(1).textContent = data.tanggal;
+      row.insertCell(2).textContent = data.pelanggaran;
+    });
+
+    if (hasilPencarian.length > 0) {
+      document.getElementById("popupOverlay").style.display = "block";
+      document.getElementById("popup").style.display = "block";
+    } else {
+      alert("Siswa dengan nama tersebut tidak ditemukan.");
+    }
+  }
+
+  // Fungsi untuk menutup popup
+  function tutupPopup() {
+    document.getElementById("popupOverlay").style.display = "none";
+    document.getElementById("popup").style.display = "none";
+  }
+
+  // Muat data dari Local Storage saat halaman dimuat
+  window.onload = muatData;
+    // Fungsi untuk login
+function login() {
+  const username = document.getElementById("username").value;
+  const password = document.getElementById("password").value;
+
+  // Verifikasi username dan password sederhana
+  if (username === "admin" && password === "1234") {
+    // Login berhasil, tampilkan tabel
+    document.getElementById("loginPopup").style.display = "none";
+    document.getElementById("loginOverlay").style.display = "none";
+    document.getElementById("tabelContainer").style.display = "block";
+    muatData(); // Memuat data tabel setelah login
+  } else {
+    alert("Username atau password salah!");
+  }
+}
+
+// Menampilkan login popup saat halaman dimuat
+window.onload = function() {
+  document.getElementById("loginPopup").style.display = "block";
+  document.getElementById("loginOverlay").style.display = "block";
+};
+</script>
+
+</body>
+</html>

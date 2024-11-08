@@ -31,7 +31,7 @@
         }
         input[type="text"] {
             padding: 10px;
-            width: 75%;
+            width: 65%;
             margin-bottom: 20px;
             border-radius: 5px;
             border: 1px solid #ccc;
@@ -79,12 +79,13 @@
 
 <div class="dashboard-container">
     <div class="content">
-        <h2>Selamat datang di Dashboard!</h2>
+        <h2>Data Pelanggaran Siswa/Siswi</h2>
         <p>Anda berhasil login.</p>
 
         <!-- Kolom Pencarian dan Tombol Pergi ke Halaman Lain -->
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Cari Nama Siswa..." oninput="searchData()">
+            <button onclick="searchData()">Cari</button>
+            <input type="text" id="searchInput" placeholder="Cari Nama Siswa...">
             <button onclick="goToAnotherPage()">TAMBAH CATATAN</button>
         </div>
 
@@ -125,7 +126,6 @@
     request.onsuccess = function(event) {
         db = event.target.result;
         console.log("IndexedDB berhasil dibuka");
-        loadData(); // Memuat data saat halaman pertama kali dibuka
     };
 
     // Membuat objek store jika database baru
@@ -140,24 +140,28 @@
         objectStore.createIndex("guru", "guru", { unique: false });
     };
 
-    // Fungsi untuk memuat data pelanggaran
-    function loadData() {
+    // Fungsi untuk mencari data berdasarkan nama siswa
+    function searchData() {
+        const searchTerm = searchInput.value.toLowerCase(); // Mengambil nilai pencarian
         const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
         const request = objectStore.getAll();
 
         request.onsuccess = function(event) {
             const data = event.target.result;
-            pelanggaranTable.innerHTML = ""; // Mengosongkan tabel sebelum dimuat data baru
+            pelanggaranTable.innerHTML = ""; // Mengosongkan tabel sebelum memuat data baru
             data.forEach(item => {
-                const newRow = pelanggaranTable.insertRow();
-                newRow.innerHTML = `
-                    <td>${item.nama}</td>
-                    <td>${item.kelas}</td>
-                    <td>${item.tanggal}</td>
-                    <td>${item.pelanggaran}</td>
-                    <td>${item.keterangan}</td>
-                    <td>${item.guru}</td>
-                `;
+                const nama = item.nama.toLowerCase(); // Membuat nama dalam lowercase untuk perbandingan
+                if (nama.includes(searchTerm)) {
+                    const newRow = pelanggaranTable.insertRow();
+                    newRow.innerHTML = `
+                        <td>${item.nama}</td>
+                        <td>${item.kelas}</td>
+                        <td>${item.tanggal}</td>
+                        <td>${item.pelanggaran}</td>
+                        <td>${item.keterangan}</td>
+                        <td>${item.guru}</td>
+                    `;
+                }
             });
         };
 
@@ -166,27 +170,9 @@
         };
     }
 
-    // Fungsi untuk mencari nama siswa
-    function searchData() {
-        const searchTerm = searchInput.value.toLowerCase(); // Mengambil nilai pencarian
-        const rows = pelanggaranTable.getElementsByTagName('tr');
-
-        // Menyembunyikan baris yang tidak cocok dengan pencarian
-        for (let row of rows) {
-            const namaCell = row.cells[0]; // Nama siswa ada di kolom pertama (index 0)
-            const nama = namaCell ? namaCell.textContent.toLowerCase() : "";
-
-            if (nama.includes(searchTerm)) {
-                row.style.display = ""; // Menampilkan baris jika nama cocok dengan pencarian
-            } else {
-                row.style.display = "none"; // Menyembunyikan baris jika nama tidak cocok
-            }
-        }
-    }
-
     // Fungsi untuk pergi ke halaman lain
     function goToAnotherPage() {
-        window.location.href = "hal3.html"; // Ganti "another_page.html" dengan halaman tujuan Anda
+        window.location.href = "hal3.html"; // Ganti "hal3.html" dengan halaman tujuan Anda
     }
 </script>
 

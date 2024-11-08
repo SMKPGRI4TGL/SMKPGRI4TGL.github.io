@@ -98,8 +98,8 @@
 <button class="save-btn" onclick="saveData()">Simpan Data</button>
 <button class="load-btn" onclick="loadData()">Muatan Data</button>
 <button class="pergi" onclick="goToAnotherPage()">KEMBALI</button>
+
 <script>
-    // Membuka koneksi IndexedDB
     let db;
     const request = indexedDB.open("PelanggaranDB", 1);
 
@@ -110,10 +110,9 @@
     request.onsuccess = function(event) {
         db = event.target.result;
         console.log("IndexedDB berhasil dibuka");
-        loadData(); // Memuat data saat halaman pertama kali dibuka
+        loadData(); 
     };
 
-    // Membuat objek store jika database baru
     request.onupgradeneeded = function(event) {
         db = event.target.result;
         const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
@@ -125,7 +124,6 @@
         objectStore.createIndex("guru", "guru", { unique: false });
     };
 
-    // Fungsi untuk menambah baris baru
     function addRow() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const newRow = table.insertRow();
@@ -167,12 +165,10 @@
         `;
     }
 
-    // Fungsi untuk menyimpan data ke IndexedDB
     function saveData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const rows = table.rows;
         
-        // Menyimpan data setiap baris
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const nama = row.cells[0].children[0].value;
@@ -185,24 +181,36 @@
             if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
                 const transaction = db.transaction(["pelanggaran"], "readwrite");
                 const objectStore = transaction.objectStore("pelanggaran");
-                
-                const data = {
-                    nama: nama,
-                    kelas: kelas,
-                    tanggal: tanggal,
-                    pelanggaran: pelanggaran,
-                    keterangan: keterangan,
-                    guru: guru
+
+                const data = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
+
+                const request = objectStore.index("tanggal").openCursor();
+                request.onsuccess = function(event) {
+                    const cursor = event.target.result;
+                    let isDuplicate = false;
+                    if (cursor) {
+                        const existingData = cursor.value;
+                        if (existingData.nama === nama &&
+                            existingData.kelas === kelas &&
+                            existingData.tanggal === tanggal &&
+                            existingData.pelanggaran === pelanggaran &&
+                            existingData.keterangan === keterangan &&
+                            existingData.guru === guru) {
+                                objectStore.delete(existingData.id);
+                                isDuplicate = true;
+                        }
+                        cursor.continue();
+                    } else {
+                        if (!isDuplicate) {
+                            objectStore.add(data);
+                            alert("Data berhasil disimpan!");
+                        }
+                    }
                 };
-                
-                objectStore.add(data);
             }
         }
-
-        alert("Data berhasil disimpan!");
     }
 
-    // Fungsi untuk memuat data dari IndexedDB
     function loadData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
@@ -210,7 +218,7 @@
 
         request.onsuccess = function(event) {
             const data = event.target.result;
-            table.innerHTML = ""; // Mengosongkan tabel sebelum dimuat data baru
+            table.innerHTML = ""; 
             data.forEach(item => {
                 const newRow = table.insertRow();
                 newRow.innerHTML = `
@@ -226,26 +234,12 @@
                     <td><select name="guru" disabled>
                         <option value="${item.guru}" selected>${item.guru}</option>
                     </select></td>
-                    <td><button class="delete-btn" onclick="confirmDelete(event, ${item.id})">Hapus</button></td>
+                    <td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>
                 `;
             });
         };
-
-        request.onerror = function(event) {
-            console.log("Gagal memuat data dari IndexedDB");
-        };
     }
 
-    // Fungsi untuk mengonfirmasi penghapusan data
-    function confirmDelete(event, id) {
-        const confirmAction = confirm("Apakah Anda yakin ingin menghapus data ini?");
-        
-        if (confirmAction) {
-            deleteData(id);
-        }
-    }
-
-    // Fungsi untuk menghapus data dari IndexedDB
     function deleteData(id) {
         const transaction = db.transaction(["pelanggaran"], "readwrite");
         const objectStore = transaction.objectStore("pelanggaran");
@@ -253,17 +247,20 @@
 
         request.onsuccess = function() {
             alert("Data berhasil dihapus!");
-            loadData(); // Muat ulang data setelah penghapusan
+            loadData();
         };
+    }
 
-        request.onerror = function(event) {
-            console.log("Gagal menghapus data");
-        };
+    function confirmDelete(event) {
+        if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
+            const row = event.target.closest("tr");
+            row.remove();
+        }
     }
+
     function goToAnotherPage() {
-        window.location.href = "hal2.html"; // Ganti "another_page.html" dengan halaman tujuan Anda
+        window.location.href = "another_page.html";
     }
-   
 </script>
 
 </body>

@@ -97,14 +97,18 @@
     }
 
     function deleteData(id) {
-        const transaction = db.transaction(["pelanggaran"], "readwrite");
-        const objectStore = transaction.objectStore("pelanggaran");
-        const request = objectStore.delete(id);
+        // Tampilkan konfirmasi pop-up
+        const confirmDelete = confirm("Apakah anda ingin menghapus data ini?");
+        if (confirmDelete) {
+            const transaction = db.transaction(["pelanggaran"], "readwrite");
+            const objectStore = transaction.objectStore("pelanggaran");
+            const request = objectStore.delete(id);
 
-        request.onsuccess = function() {
-            alert("Data berhasil dihapus!");
-            loadData(); // Muat ulang data setelah menghapus
-        };
+            request.onsuccess = function() {
+                alert("Data berhasil dihapus!");
+                loadData(); // Muat ulang data setelah menghapus
+            };
+        }
     }
 
     function goBack() {

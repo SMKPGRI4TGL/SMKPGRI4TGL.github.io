@@ -54,10 +54,24 @@
         .search-container button:hover {
             background-color: #45a049;
         }
+        .load-data-button {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #ff5733;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        .load-data-button:hover {
+            background-color: #e04e20;
+        }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
+            display: none; /* Sembunyikan tabel secara default */
         }
         table, th, td {
             border: 1px solid black;
@@ -106,16 +120,18 @@
             </tbody>
         </table>
 
+        <!-- Tombol untuk Memuat Data -->
+        <button class="load-data-button" onclick="goToLoadDataPage()">Muat Data</button>
+
         <a href="index.html">Keluar</a>
     </div>
 </div>
 
 <script>
-    // Mendapatkan referensi ke tabel dan kolom pencarian
     const searchInput = document.getElementById('searchInput');
     const pelanggaranTable = document.getElementById('pelanggaranTable').getElementsByTagName('tbody')[0];
+    const pelanggaranTableContainer = document.getElementById('pelanggaranTable');
 
-    // Membuka koneksi IndexedDB
     let db;
     const request = indexedDB.open("PelanggaranDB", 1);
 
@@ -128,7 +144,6 @@
         console.log("IndexedDB berhasil dibuka");
     };
 
-    // Membuat objek store jika database baru
     request.onupgradeneeded = function(event) {
         db = event.target.result;
         const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
@@ -140,18 +155,20 @@
         objectStore.createIndex("guru", "guru", { unique: false });
     };
 
-    // Fungsi untuk mencari data berdasarkan nama siswa
     function searchData() {
-        const searchTerm = searchInput.value.toLowerCase(); // Mengambil nilai pencarian
+        const searchTerm = searchInput.value.toLowerCase();
         const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
         const request = objectStore.getAll();
 
         request.onsuccess = function(event) {
             const data = event.target.result;
-            pelanggaranTable.innerHTML = ""; // Mengosongkan tabel sebelum memuat data baru
+            pelanggaranTable.innerHTML = "";
+            let hasResults = false;
+            
             data.forEach(item => {
-                const nama = item.nama.toLowerCase(); // Membuat nama dalam lowercase untuk perbandingan
+                const nama = item.nama.toLowerCase();
                 if (nama.includes(searchTerm)) {
+                    hasResults = true;
                     const newRow = pelanggaranTable.insertRow();
                     newRow.innerHTML = `
                         <td>${item.nama}</td>
@@ -163,6 +180,12 @@
                     `;
                 }
             });
+            
+            if (hasResults) {
+                pelanggaranTableContainer.style.display = "table"; // Tampilkan tabel jika ada hasil pencarian
+            } else {
+                pelanggaranTableContainer.style.display = "none"; // Sembunyikan tabel jika tidak ada hasil
+            }
         };
 
         request.onerror = function(event) {
@@ -170,9 +193,12 @@
         };
     }
 
-    // Fungsi untuk pergi ke halaman lain
     function goToAnotherPage() {
-        window.location.href = "hal3.html"; // Ganti "hal3.html" dengan halaman tujuan Anda
+        window.location.href = "hal3.html";
+    }
+
+    function goToLoadDataPage() {
+        window.location.href = "hal4.html"; // Mengarahkan ke halaman untuk menampilkan data
     }
 </script>
 

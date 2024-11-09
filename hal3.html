@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Pelanggaran Siswa</title>
+    <link rel="stylesheet" href="style.css">
     <style>
         table {
             width: 100%;
@@ -94,9 +95,12 @@
     </tbody>
 </table>
 
-<button class="add-row-btn" onclick="addRow()">Tambah Baris</button>
-<button class="save-btn" onclick="saveData()">Simpan Data</button>
-<button class="pergi" onclick="goToAnotherPage()">KEMBALI</button>
+<div class="button-container">
+    <button class="add-row-btn" onclick="addRow()">Tambah</button>
+    <button class="save-btn" onclick="saveData()">Simpan</button>
+    <button class="pergi" onclick="goToAnotherPage()">Kembali</button>
+</div>
+
 
 <script>
     let db;

@@ -1,0 +1,141 @@
+/* Mengatur gaya dasar untuk elemen body */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 0;
+    color: #333;
+}
+
+/* Gaya untuk judul halaman */
+h2 {
+    text-align: center;
+    margin-top: 20px;
+    color: #333;
+}
+
+/* Mengatur tampilan tabel */
+table {
+    width: 90%;
+    margin: 20px auto;
+    border-collapse: collapse;
+    background-color: #fff;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+}
+
+th {
+    background-color: #0052cc;
+    color: #fff;
+    text-align: center;
+    font-weight: bold;
+}
+
+tr:hover {
+    background-color: #f1f1f1;
+}
+
+/* Gaya input teks dan dropdown */
+input[type="text"], input[type="date"], select {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
+    box-sizing: border-box;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background-color: #fafafa;
+}
+
+/* Mengatur tata letak tombol */
+.button-container {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    margin: 20px auto;
+}
+
+/* Gaya untuk tombol "Tambah Daftar" di kiri */
+button.add-row-btn {
+    flex: 1;
+    background-color: #0052cc; /* Biru */
+    color: #fff;
+    padding: 12px;
+    margin-right: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.add-row-btn:hover {
+    background-color: #003d99;
+}
+
+/* Gaya untuk tombol "Simpan" di tengah */
+button.save-btn {
+    flex: 1;
+    background-color: #28a745; /* Hijau */
+    color: #fff;
+    padding: 12px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.save-btn:hover {
+    background-color: #218838;
+}
+
+/* Gaya untuk tombol "Kembali" di kanan */
+button.pergi {
+    flex: 1;
+    background-color: #dc3545; /* Merah */
+    color: #fff;
+    padding: 12px;
+    margin-left: 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.pergi:hover {
+    background-color: #c82333;
+}
+
+button.back-btn {
+    flex: 1;
+    background-color: #28a745; /* Hijau */
+    color: #fff;
+    padding: 12px;
+    margin: 0 10px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+button.back-btn:hover {
+    background-color: #218838;
+}
+
+/* Gaya tombol hapus */
+button.delete-btn {
+    color: #ff4d4d;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button.delete-btn:hover {
+    color: #cc0000;
+    text-decoration: underline;
+}

@@ -9,72 +9,70 @@
             font-family: Arial, sans-serif;
             margin: 0;
             padding: 0;
-            background-color: #f4f4f4;
+            background-color: #f8f9fa;
+            color: #333;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
         }
         .dashboard-container {
             display: flex;
             justify-content: center;
             align-items: center;
             flex-direction: column;
-            height: 100vh;
+            padding: 40px;
+            flex: 1;
         }
         .content {
             text-align: center;
             padding: 30px;
             background-color: white;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 80%;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 70%;
+            max-width: 800px;
         }
         h2 {
             margin-bottom: 20px;
-        }
-        input[type="text"] {
-            padding: 10px;
-            width: 65%;
-            margin-bottom: 20px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
+            color: #4CAF50;
+            font-weight: bold;
         }
         .search-container {
             display: flex;
             justify-content: space-between;
+            gap: 10px;
             width: 100%;
             margin-bottom: 20px;
         }
-        .search-container button {
+        input[type="text"] {
             padding: 10px;
+            width: 100%;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        .search-container button, .load-data-button {
+            padding: 10px;
+            width: 100%;
             background-color: #4CAF50;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
             font-size: 16px;
+            transition: background-color 0.3s;
         }
-        .search-container button:hover {
+        .search-container button:hover, .load-data-button:hover {
             background-color: #45a049;
-        }
-        .load-data-button {
-            margin-top: 20px;
-            padding: 10px;
-            background-color: #ff5733;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        .load-data-button:hover {
-            background-color: #e04e20;
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 20px;
-            display: none; /* Sembunyikan tabel secara default */
+            display: none;
         }
         table, th, td {
-            border: 1px solid black;
+            border: 1px solid #ddd;
         }
         th, td {
             padding: 10px;
@@ -85,25 +83,37 @@
             text-decoration: none;
             font-size: 16px;
             margin-top: 20px;
-            display: block;
+            display: inline-block;
+        }
+        .full-screen-image {
+            width: 100%;
+            height: 100vh;
+            background-image: url('logo.png');
+            background-size: cover;
+            background-position: center;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: -1;
+            opacity: 0.5;
         }
     </style>
 </head>
 <body>
+
+<div class="full-screen-image"></div>
 
 <div class="dashboard-container">
     <div class="content">
         <h2>Data Pelanggaran Siswa/Siswi</h2>
         <p>Anda berhasil login.</p>
 
-        <!-- Kolom Pencarian dan Tombol Pergi ke Halaman Lain -->
         <div class="search-container">
             <button onclick="searchData()">Cari</button>
             <input type="text" id="searchInput" placeholder="Cari Nama Siswa...">
             <button onclick="goToAnotherPage()">TAMBAH CATATAN</button>
         </div>
 
-        <!-- Tabel untuk menampilkan pelanggaran -->
         <table id="pelanggaranTable">
             <thead>
                 <tr>
@@ -115,14 +125,10 @@
                     <th>Guru</th>
                 </tr>
             </thead>
-            <tbody>
-                <!-- Data akan dimuat di sini -->
-            </tbody>
+            <tbody></tbody>
         </table>
 
-        <!-- Tombol untuk Memuat Data -->
         <button class="load-data-button" onclick="goToLoadDataPage()">Muat Data</button>
-
         <a href="index.html">Keluar</a>
     </div>
 </div>
@@ -181,15 +187,7 @@
                 }
             });
             
-            if (hasResults) {
-                pelanggaranTableContainer.style.display = "table"; // Tampilkan tabel jika ada hasil pencarian
-            } else {
-                pelanggaranTableContainer.style.display = "none"; // Sembunyikan tabel jika tidak ada hasil
-            }
-        };
-
-        request.onerror = function(event) {
-            console.log("Gagal memuat data dari IndexedDB");
+            pelanggaranTableContainer.style.display = hasResults ? "table" : "none";
         };
     }
 
@@ -198,7 +196,7 @@
     }
 
     function goToLoadDataPage() {
-        window.location.href = "hal4.html"; // Mengarahkan ke halaman untuk menampilkan data
+        window.location.href = "hal4.html";
     }
 </script>
 

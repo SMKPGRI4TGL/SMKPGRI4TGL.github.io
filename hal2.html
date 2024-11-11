@@ -133,71 +133,73 @@
     </div>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-database.js"></script>
+
 <script>
-    const searchInput = document.getElementById('searchInput');
-    const pelanggaranTable = document.getElementById('pelanggaranTable').getElementsByTagName('tbody')[0];
-    const pelanggaranTableContainer = document.getElementById('pelanggaranTable');
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyCsAKjro8Fv1RRmO02GrmPA1UXFmNO1bUA",
+    authDomain: "datapelanggaransiswa-da7bb.firebaseapp.com",
+    databaseURL: "https://datapelanggaransiswa-da7bb-default-rtdb.firebaseio.com/",
+    projectId: "datapelanggaransiswa-da7bb",
+    storageBucket: "datapelanggaransiswa-da7bb.appspot.com",
+    messagingSenderId: "515869958114",
+    appId: "1:515869958114:web:77bf722d9f85fdcc8963bb"
+};
 
-    let db;
-    const request = indexedDB.open("PelanggaranDB", 1);
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database(app);
 
-    request.onerror = function(event) {
-        console.log("Gagal membuka IndexedDB");
-    };
+const searchInput = document.getElementById('searchInput');
+const pelanggaranTable = document.getElementById('pelanggaranTable').getElementsByTagName('tbody')[0];
+const pelanggaranTableContainer = document.getElementById('pelanggaranTable');
 
-    request.onsuccess = function(event) {
-        db = event.target.result;
-        console.log("IndexedDB berhasil dibuka");
-    };
+function searchData() {
+    const searchTerm = searchInput.value.toLowerCase();
 
-    request.onupgradeneeded = function(event) {
-        db = event.target.result;
-        const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
-        objectStore.createIndex("nama", "nama", { unique: false });
-        objectStore.createIndex("kelas", "kelas", { unique: false });
-        objectStore.createIndex("tanggal", "tanggal", { unique: false });
-        objectStore.createIndex("pelanggaran", "pelanggaran", { unique: false });
-        objectStore.createIndex("keterangan", "keterangan", { unique: false });
-        objectStore.createIndex("guru", "guru", { unique: false });
-    };
-
-    function searchData() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
-        const request = objectStore.getAll();
-
-        request.onsuccess = function(event) {
-            const data = event.target.result;
+    const ref = database.ref("pelanggaran");
+    ref.once("value")
+        .then(snapshot => {
+            const data = snapshot.val();
             pelanggaranTable.innerHTML = "";
             let hasResults = false;
-            
-            data.forEach(item => {
-                const nama = item.nama.toLowerCase();
-                if (nama.includes(searchTerm)) {
-                    hasResults = true;
-                    const newRow = pelanggaranTable.insertRow();
-                    newRow.innerHTML = `
-                        <td>${item.nama}</td>
-                        <td>${item.kelas}</td>
-                        <td>${item.tanggal}</td>
-                        <td>${item.pelanggaran}</td>
-                        <td>${item.keterangan}</td>
-                        <td>${item.guru}</td>
-                    `;
+
+            for (const key in data) {
+                if (data.hasOwnProperty(key)) {
+                    const item = data[key];
+                    const nama = item.nama.toLowerCase();
+                    if (nama.includes(searchTerm)) {
+                        hasResults = true;
+                        const newRow = pelanggaranTable.insertRow();
+                        newRow.innerHTML = `
+                            <td>${item.nama}</td>
+                            <td>${item.kelas}</td>
+                            <td>${item.tanggal}</td>
+                            <td>${item.pelanggaran}</td>
+                            <td>${item.keterangan}</td>
+                            <td>${item.guru}</td>
+                        `;
+                    }
                 }
-            });
-            
+            }
+
             pelanggaranTableContainer.style.display = hasResults ? "table" : "none";
-        };
-    }
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+        });
+}
 
-    function goToAnotherPage() {
-        window.location.href = "hal3.html";
-    }
+function goToAnotherPage() {
+    window.location.href = "hal3.html";
+}
 
-    function goToLoadDataPage() {
-        window.location.href = "hal4.html";
-    }
+function goToLoadDataPage() {
+    window.location.href = "hal4.html";
+}
 </script>
 
 </body>

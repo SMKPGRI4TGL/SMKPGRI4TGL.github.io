@@ -101,31 +101,26 @@
     <button class="pergi" onclick="goToAnotherPage()">Kembali</button>
 </div>
 
-
 <script>
-    let db;
-    const request = indexedDB.open("PelanggaranDB", 1);
+    // Ubah dari IndexedDB ke Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
-    request.onerror = function(event) {
-        console.log("Gagal membuka IndexedDB");
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsAKjro8Fv1RRmO02GrmPA1UXFmNO1bUA",
+  authDomain: "datapelanggaransiswa-da7bb.firebaseapp.com",
+  projectId: "datapelanggaransiswa-da7bb",
+  storageBucket: "datapelanggaransiswa-da7bb.firebasestorage.app",
+  messagingSenderId: "515869958114",
+  appId: "1:515869958114:web:77bf722d9f85fdcc8963bb",
     };
 
-    request.onsuccess = function(event) {
-        db = event.target.result;
-        console.log("IndexedDB berhasil dibuka");
-    };
+    // Inisialisasi Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
-    request.onupgradeneeded = function(event) {
-        db = event.target.result;
-        const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
-        objectStore.createIndex("nama", "nama", { unique: false });
-        objectStore.createIndex("kelas", "kelas", { unique: false });
-        objectStore.createIndex("tanggal", "tanggal", { unique: false });
-        objectStore.createIndex("pelanggaran", "pelanggaran", { unique: false });
-        objectStore.createIndex("keterangan", "keterangan", { unique: false });
-        objectStore.createIndex("guru", "guru", { unique: false });
-    };
-
+    // Tambah baris baru di tabel
     function addRow() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const newRow = table.insertRow();
@@ -167,10 +162,11 @@
         `;
     }
 
+    // Simpan data ke Firebase
     function saveData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const rows = table.rows;
-        
+
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
             const nama = row.cells[0].children[0].value;
@@ -181,38 +177,14 @@
             const guru = row.cells[5].children[0].value;
 
             if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
-                const transaction = db.transaction(["pelanggaran"], "readwrite");
-                const objectStore = transaction.objectStore("pelanggaran");
-
-                const data = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
-
-                const request = objectStore.index("tanggal").openCursor();
-                request.onsuccess = function(event) {
-                    const cursor = event.target.result;
-                    let isDuplicate = false;
-                    if (cursor) {
-                        const existingData = cursor.value;
-                        if (existingData.nama === nama &&
-                            existingData.kelas === kelas &&
-                            existingData.tanggal === tanggal &&
-                            existingData.pelanggaran === pelanggaran &&
-                            existingData.keterangan === keterangan &&
-                            existingData.guru === guru) {
-                                objectStore.delete(existingData.id);
-                                isDuplicate = true;
-                        }
-                        cursor.continue();
-                    } else {
-                        if (!isDuplicate) {
-                            objectStore.add(data);
-                            alert("Data berhasil disimpan!");
-                        }
-                    }
-                };
+                const pelanggaranRef = ref(db, 'pelanggaran');
+                push(pelanggaranRef, { nama, kelas, tanggal, pelanggaran, keterangan, guru });
             }
         }
+        alert("Data berhasil disimpan!");
     }
 
+    // Hapus data dari Firebase
     function confirmDelete(event) {
         if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
             const row = event.target.closest("tr");

@@ -60,28 +60,34 @@
 </div>
 
 <script>
-    let db;
-    const request = indexedDB.open("PelanggaranDB", 1);
+    // Ubah dari IndexedDB ke Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-app.js";
+    import { getDatabase, ref, onValue, remove } from "https://www.gstatic.com/firebasejs/9.18.0/firebase-database.js";
 
-    request.onerror = function(event) {
-        console.log("Gagal membuka IndexedDB");
+    // Konfigurasi Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyCsAKjro8Fv1RRmO02GrmPA1UXFmNO1bUA",
+  authDomain: "datapelanggaransiswa-da7bb.firebaseapp.com",
+  projectId: "datapelanggaransiswa-da7bb",
+  storageBucket: "datapelanggaransiswa-da7bb.firebasestorage.app",
+  messagingSenderId: "515869958114",
+  appId: "1:515869958114:web:77bf722d9f85fdcc8963bb",
     };
 
-    request.onsuccess = function(event) {
-        db = event.target.result;
-        console.log("IndexedDB berhasil dibuka");
-        loadData();
-    };
+    // Inisialisasi Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
 
+    // Muat data dari Firebase
     function loadData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-        const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
-        const request = objectStore.getAll();
+        const pelanggaranRef = ref(db, 'pelanggaran');
 
-        request.onsuccess = function(event) {
-            const data = event.target.result;
-            table.innerHTML = ""; 
-            data.forEach(item => {
+        onValue(pelanggaranRef, (snapshot) => {
+            const data = snapshot.val();
+            table.innerHTML = "";
+            for (const id in data) {
+                const item = data[id];
                 const newRow = table.insertRow();
                 newRow.innerHTML = `
                     <td>${item.nama}</td>
@@ -90,30 +96,35 @@
                     <td>${item.pelanggaran}</td>
                     <td>${item.keterangan}</td>
                     <td>${item.guru}</td>
-                    <td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>
+                    <td><button class="delete-btn" onclick="deleteData('${id}')">Hapus</button></td>
                 `;
-            });
-        };
+            }
+        });
     }
 
+    // Hapus data dari Firebase
     function deleteData(id) {
         // Tampilkan konfirmasi pop-up
         const confirmDelete = confirm("Apakah anda ingin menghapus data ini?");
         if (confirmDelete) {
-            const transaction = db.transaction(["pelanggaran"], "readwrite");
-            const objectStore = transaction.objectStore("pelanggaran");
-            const request = objectStore.delete(id);
-
-            request.onsuccess = function() {
-                alert("Data berhasil dihapus!");
-                loadData(); // Muat ulang data setelah menghapus
-            };
+            const pelanggaranRef = ref(db, 'pelanggaran/' + id);
+            remove(pelanggaranRef)
+                .then(() => {
+                    alert("Data berhasil dihapus!");
+                    loadData(); // Muat ulang data setelah menghapus
+                })
+                .catch((error) => {
+                    console.error("Error menghapus data:", error);
+                });
         }
     }
 
     function goBack() {
         window.location.href = "hal2.html";
     }
+
+    // Memuat data saat halaman dibuka
+    window.onload = loadData;
 </script>
 
 </body>

@@ -101,128 +101,109 @@
     <button class="pergi" onclick="goToAnotherPage()">Kembali</button>
 </div>
 
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-database.js"></script>
 
 <script>
-    let db;
-    const request = indexedDB.open("PelanggaranDB", 1);
+// Firebase configuration
+const firebaseConfig = {
+  apiKey: "AIzaSyCsAKjro8Fv1RRmO02GrmPA1UXFmNO1bUA",
+  authDomain: "datapelanggaransiswa-da7bb.firebaseapp.com",
+  databaseURL: "https://datapelanggaransiswa-da7bb-default-rtdb.firebaseio.com/",
+  projectId: "datapelanggaransiswa-da7bb",
+  storageBucket: "datapelanggaransiswa-da7bb.appspot.com",
+  messagingSenderId: "515869958114",
+  appId: "1:515869958114:web:77bf722d9f85fdcc8963bb"
+};
 
-    request.onerror = function(event) {
-        console.log("Gagal membuka IndexedDB");
-    };
+// Initialize Firebase
+const app = firebase.initializeApp(firebaseConfig);
+const database = firebase.database(app);
 
-    request.onsuccess = function(event) {
-        db = event.target.result;
-        console.log("IndexedDB berhasil dibuka");
-    };
+function addRow() {
+    const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+    const newRow = table.insertRow();
+    
+    newRow.innerHTML = `
+        <td><input type="text" name="nama" placeholder="Nama"></td>
+        <td>
+            <select name="kelas">
+                <option value="">Pilih Kelas</option>
+                <option value="10 RPL">10 RPL</option>
+                <option value="10 PM">10 PM</option>
+                <option value="10 TB">10 TB</option>
+                <option value="11 RPL">11 RPL</option>
+                <option value="11 PM">11 PM</option>
+                <option value="11 TB">11 TB</option>
+                <option value="12 RPL 1">12 RPL 1</option>
+                <option value="12 RPL 2">12 RPL 2</option>
+                <option value="12 PM">12 PM</option>
+                <option value="12 TB">12 TB</option>
+            </select>
+        </td>
+        <td><input type="date" name="tanggal"></td>
+        <td><input type="text" name="pelanggaran" placeholder="Pelanggaran"></td>
+        <td>
+            <select name="keterangan">
+                <option value="">Pilih Keterangan</option>
+                <option value="Pembinaan">Pembinaan</option>
+                <option value="Konsekuensi">Konsekuensi</option>
+            </select>
+        </td>
+        <td>
+            <select name="guru">
+                <option value="">Pilih Guru</option>
+                <option value="PAK.UBAI">PAK.UBAI</option>
+                <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
+            </select>
+        </td>
+        <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
+    `;
+}
 
-    request.onupgradeneeded = function(event) {
-        db = event.target.result;
-        const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
-        objectStore.createIndex("nama", "nama", { unique: false });
-        objectStore.createIndex("kelas", "kelas", { unique: false });
-        objectStore.createIndex("tanggal", "tanggal", { unique: false });
-        objectStore.createIndex("pelanggaran", "pelanggaran", { unique: false });
-        objectStore.createIndex("keterangan", "keterangan", { unique: false });
-        objectStore.createIndex("guru", "guru", { unique: false });
-    };
+function saveData() {
+    const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+    const rows = table.rows;
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = rows[i];
+        const nama = row.cells[0].children[0].value;
+        const kelas = row.cells[1].children[0].value;
+        const tanggal = row.cells[2].children[0].value;
+        const pelanggaran = row.cells[3].children[0].value;
+        const keterangan = row.cells[4].children[0].value;
+        const guru = row.cells[5].children[0].value;
 
-    function addRow() {
-        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-        const newRow = table.insertRow();
-        
-        newRow.innerHTML = `
-            <td><input type="text" name="nama" placeholder="Nama"></td>
-            <td>
-                <select name="kelas">
-                    <option value="">Pilih Kelas</option>
-                    <option value="10 RPL">10 RPL</option>
-                    <option value="10 PM">10 PM</option>
-                    <option value="10 TB">10 TB</option>
-                    <option value="11 RPL">11 RPL</option>
-                    <option value="11 PM">11 PM</option>
-                    <option value="11 TB">11 TB</option>
-                    <option value="12 RPL 1">12 RPL 1</option>
-                    <option value="12 RPL 2">12 RPL 2</option>
-                    <option value="12 PM">12 PM</option>
-                    <option value="12 TB">12 TB</option>
-                </select>
-            </td>
-            <td><input type="date" name="tanggal"></td>
-            <td><input type="text" name="pelanggaran" placeholder="Pelanggaran"></td>
-            <td>
-                <select name="keterangan">
-                    <option value="">Pilih Keterangan</option>
-                    <option value="Pembinaan">Pembinaan</option>
-                    <option value="Konsekuensi">Konsekuensi</option>
-                </select>
-            </td>
-            <td>
-                <select name="guru">
-                    <option value="">Pilih Guru</option>
-                    <option value="PAK.UBAI">PAK.UBAI</option>
-                    <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
-                </select>
-            </td>
-            <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
-        `;
-    }
-
-    function saveData() {
-        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-        const rows = table.rows;
-        
-        for (let i = 0; i < rows.length; i++) {
-            const row = rows[i];
-            const nama = row.cells[0].children[0].value;
-            const kelas = row.cells[1].children[0].value;
-            const tanggal = row.cells[2].children[0].value;
-            const pelanggaran = row.cells[3].children[0].value;
-            const keterangan = row.cells[4].children[0].value;
-            const guru = row.cells[5].children[0].value;
-
-            if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
-                const transaction = db.transaction(["pelanggaran"], "readwrite");
-                const objectStore = transaction.objectStore("pelanggaran");
-
-                const data = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
-
-                const request = objectStore.index("tanggal").openCursor();
-                request.onsuccess = function(event) {
-                    const cursor = event.target.result;
-                    let isDuplicate = false;
-                    if (cursor) {
-                        const existingData = cursor.value;
-                        if (existingData.nama === nama &&
-                            existingData.kelas === kelas &&
-                            existingData.tanggal === tanggal &&
-                            existingData.pelanggaran === pelanggaran &&
-                            existingData.keterangan === keterangan &&
-                            existingData.guru === guru) {
-                                objectStore.delete(existingData.id);
-                                isDuplicate = true;
-                        }
-                        cursor.continue();
-                    } else {
-                        if (!isDuplicate) {
-                            objectStore.add(data);
-                            alert("Data berhasil disimpan!");
-                        }
-                    }
-                };
-            }
+        if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
+            // Menyimpan data ke Firebase Realtime Database
+            const newDataRef = database.ref("pelanggaran").push();
+            newDataRef.set({
+                nama,
+                kelas,
+                tanggal,
+                pelanggaran,
+                keterangan,
+                guru
+            }).then(() => {
+                alert("Data berhasil disimpan!");
+            }).catch(error => {
+                console.error("Error saving data: ", error);
+            });
         }
     }
+}
 
-    function confirmDelete(event) {
-        if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
-            const row = event.target.closest("tr");
-            row.remove();
-        }
+function confirmDelete(event) {
+    if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
+        const row = event.target.closest("tr");
+        row.remove();
     }
+}
 
-    function goToAnotherPage() {
-        window.location.href = "hal2.html";
-    }
+function goToAnotherPage() {
+    window.location.href = "hal2.html";
+}
 </script>
 
 </body>

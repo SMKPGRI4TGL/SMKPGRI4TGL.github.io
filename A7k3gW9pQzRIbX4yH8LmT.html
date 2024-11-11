@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Pelanggaran - Halaman Muat Data</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        .delete-btn {
+            color: red;
+            cursor: pointer;
+        }
+        .back-btn {
+            width: 100%;
+            padding: 8px;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Data Pelanggaran Siswa - Halaman Muat Data</h2>
+
+<table id="dataTable">
+    <thead>
+        <tr>
+            <th>Nama</th>
+            <th>Kelas</th>
+            <th>Tanggal</th>
+            <th>Pelanggaran</th>
+            <th>Keterangan</th>
+            <th>Guru</th>
+            <th>Aksi</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Data akan dimuat di sini -->
+    </tbody>
+</table>
+
+<div class="button-container">
+<button class="back-btn" onclick="goBack()">Kembali</button>
+</div>
+
+<script>
+    let db;
+    const request = indexedDB.open("PelanggaranDB", 1);
+
+    request.onerror = function(event) {
+        console.log("Gagal membuka IndexedDB");
+    };
+
+    request.onsuccess = function(event) {
+        db = event.target.result;
+        console.log("IndexedDB berhasil dibuka");
+        loadData();
+    };
+
+    function loadData() {
+        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
+        const request = objectStore.getAll();
+
+        request.onsuccess = function(event) {
+            const data = event.target.result;
+            table.innerHTML = ""; 
+            data.forEach(item => {
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td>${item.nama}</td>
+                    <td>${item.kelas}</td>
+                    <td>${item.tanggal}</td>
+                    <td>${item.pelanggaran}</td>
+                    <td>${item.keterangan}</td>
+                    <td>${item.guru}</td>
+                    <td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>
+                `;
+            });
+        };
+    }
+
+    function deleteData(id) {
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.delete(id);
+
+        request.onsuccess = function() {
+            alert("Data berhasil dihapus!");
+            loadData(); // Muat ulang data setelah menghapus
+        };
+    }
+
+    function goBack() {
+        window.location.href = "A7k3gW9pQzR1bX4yH6LmT.html";
+    }
+</script>
+
+</body>
+</html>

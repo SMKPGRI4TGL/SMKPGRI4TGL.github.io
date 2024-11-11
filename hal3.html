@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Pelanggaran Siswa</title>
-    <link rel="stylesheet" href="style.css">
     <style>
         table {
             width: 100%;
@@ -30,14 +29,14 @@
             color: red;
             cursor: pointer;
         }
-        .pergi {
-            color: white;
+    .pergi{
+         color: white;
             cursor: pointer;
-            width: 100%;
+        width: 100%;
             padding: 8px;
             box-sizing: border-box;
-            background-color: #ff0000;
-        }
+        background-color:#ff0000;
+    }
     </style>
 </head>
 <body>
@@ -95,115 +94,173 @@
     </tbody>
 </table>
 
-<div class="button-container">
-    <button class="add-row-btn" onclick="addRow()">Tambah</button>
-    <button class="save-btn" onclick="saveData()">Simpan</button>
-    <button class="pergi" onclick="goToAnotherPage()">Kembali</button>
-</div>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.16.1/firebase-database.js"></script>
+<button class="add-row-btn" onclick="addRow()">Tambah Baris</button>
+<button class="save-btn" onclick="saveData()">Simpan Data</button>
+<button class="load-btn" onclick="loadData()">Muatan Data</button>
+<button class="pergi" onclick="goToAnotherPage()">KEMBALI</button>
 
 <script>
-// Firebase configuration
-const firebaseConfig = {
-  apiKey: "AIzaSyCsAKjro8Fv1RRmO02GrmPA1UXFmNO1bUA",
-  authDomain: "datapelanggaransiswa-da7bb.firebaseapp.com",
-  databaseURL: "https://datapelanggaransiswa-da7bb-default-rtdb.firebaseio.com/",
-  projectId: "datapelanggaransiswa-da7bb",
-  storageBucket: "datapelanggaransiswa-da7bb.appspot.com",
-  messagingSenderId: "515869958114",
-  appId: "1:515869958114:web:77bf722d9f85fdcc8963bb"
-};
+    let db;
+    const request = indexedDB.open("PelanggaranDB", 1);
 
-// Initialize Firebase
-const app = firebase.initializeApp(firebaseConfig);
-const database = firebase.database(app);
+    request.onerror = function(event) {
+        console.log("Gagal membuka IndexedDB");
+    };
 
-function addRow() {
-    const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-    const newRow = table.insertRow();
-    
-    newRow.innerHTML = `
-        <td><input type="text" name="nama" placeholder="Nama"></td>
-        <td>
-            <select name="kelas">
-                <option value="">Pilih Kelas</option>
-                <option value="10 RPL">10 RPL</option>
-                <option value="10 PM">10 PM</option>
-                <option value="10 TB">10 TB</option>
-                <option value="11 RPL">11 RPL</option>
-                <option value="11 PM">11 PM</option>
-                <option value="11 TB">11 TB</option>
-                <option value="12 RPL 1">12 RPL 1</option>
-                <option value="12 RPL 2">12 RPL 2</option>
-                <option value="12 PM">12 PM</option>
-                <option value="12 TB">12 TB</option>
-            </select>
-        </td>
-        <td><input type="date" name="tanggal"></td>
-        <td><input type="text" name="pelanggaran" placeholder="Pelanggaran"></td>
-        <td>
-            <select name="keterangan">
-                <option value="">Pilih Keterangan</option>
-                <option value="Pembinaan">Pembinaan</option>
-                <option value="Konsekuensi">Konsekuensi</option>
-            </select>
-        </td>
-        <td>
-            <select name="guru">
-                <option value="">Pilih Guru</option>
-                <option value="PAK.UBAI">PAK.UBAI</option>
-                <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
-            </select>
-        </td>
-        <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
-    `;
-}
+    request.onsuccess = function(event) {
+        db = event.target.result;
+        console.log("IndexedDB berhasil dibuka");
+        loadData(); 
+    };
 
-function saveData() {
-    const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
-    const rows = table.rows;
-    
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        const nama = row.cells[0].children[0].value;
-        const kelas = row.cells[1].children[0].value;
-        const tanggal = row.cells[2].children[0].value;
-        const pelanggaran = row.cells[3].children[0].value;
-        const keterangan = row.cells[4].children[0].value;
-        const guru = row.cells[5].children[0].value;
+    request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
+        objectStore.createIndex("nama", "nama", { unique: false });
+        objectStore.createIndex("kelas", "kelas", { unique: false });
+        objectStore.createIndex("tanggal", "tanggal", { unique: false });
+        objectStore.createIndex("pelanggaran", "pelanggaran", { unique: false });
+        objectStore.createIndex("keterangan", "keterangan", { unique: false });
+        objectStore.createIndex("guru", "guru", { unique: false });
+    };
 
-        if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
-            // Menyimpan data ke Firebase Realtime Database
-            const newDataRef = database.ref("pelanggaran").push();
-            newDataRef.set({
-                nama,
-                kelas,
-                tanggal,
-                pelanggaran,
-                keterangan,
-                guru
-            }).then(() => {
-                alert("Data berhasil disimpan!");
-            }).catch(error => {
-                console.error("Error saving data: ", error);
-            });
+    function addRow() {
+        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        const newRow = table.insertRow();
+        
+        newRow.innerHTML = `
+            <td><input type="text" name="nama" placeholder="Nama"></td>
+            <td>
+                <select name="kelas">
+                    <option value="">Pilih Kelas</option>
+                    <option value="10 RPL">10 RPL</option>
+                    <option value="10 PM">10 PM</option>
+                    <option value="10 TB">10 TB</option>
+                    <option value="11 RPL">11 RPL</option>
+                    <option value="11 PM">11 PM</option>
+                    <option value="11 TB">11 TB</option>
+                    <option value="12 RPL 1">12 RPL 1</option>
+                    <option value="12 RPL 2">12 RPL 2</option>
+                    <option value="12 PM">12 PM</option>
+                    <option value="12 TB">12 TB</option>
+                </select>
+            </td>
+            <td><input type="date" name="tanggal"></td>
+            <td><input type="text" name="pelanggaran" placeholder="Pelanggaran"></td>
+            <td>
+                <select name="keterangan">
+                    <option value="">Pilih Keterangan</option>
+                    <option value="Pembinaan">Pembinaan</option>
+                    <option value="Konsekuensi">Konsekuensi</option>
+                </select>
+            </td>
+            <td>
+                <select name="guru">
+                    <option value="">Pilih Guru</option>
+                    <option value="PAK.UBAI">PAK.UBAI</option>
+                    <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
+                </select>
+            </td>
+            <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
+        `;
+    }
+
+    function saveData() {
+        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        const rows = table.rows;
+        
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const nama = row.cells[0].children[0].value;
+            const kelas = row.cells[1].children[0].value;
+            const tanggal = row.cells[2].children[0].value;
+            const pelanggaran = row.cells[3].children[0].value;
+            const keterangan = row.cells[4].children[0].value;
+            const guru = row.cells[5].children[0].value;
+
+            if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
+                const transaction = db.transaction(["pelanggaran"], "readwrite");
+                const objectStore = transaction.objectStore("pelanggaran");
+
+                const data = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
+
+                const request = objectStore.index("tanggal").openCursor();
+                request.onsuccess = function(event) {
+                    const cursor = event.target.result;
+                    let isDuplicate = false;
+                    if (cursor) {
+                        const existingData = cursor.value;
+                        if (existingData.nama === nama &&
+                            existingData.kelas === kelas &&
+                            existingData.tanggal === tanggal &&
+                            existingData.pelanggaran === pelanggaran &&
+                            existingData.keterangan === keterangan &&
+                            existingData.guru === guru) {
+                                objectStore.delete(existingData.id);
+                                isDuplicate = true;
+                        }
+                        cursor.continue();
+                    } else {
+                        if (!isDuplicate) {
+                            objectStore.add(data);
+                            alert("Data berhasil disimpan!");
+                        }
+                    }
+                };
+            }
         }
     }
-}
 
-function confirmDelete(event) {
-    if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
-        const row = event.target.closest("tr");
-        row.remove();
+    function loadData() {
+        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
+        const request = objectStore.getAll();
+
+        request.onsuccess = function(event) {
+            const data = event.target.result;
+            table.innerHTML = ""; 
+            data.forEach(item => {
+                const newRow = table.insertRow();
+                newRow.innerHTML = `
+                    <td><input type="text" name="nama" value="${item.nama}" disabled></td>
+                    <td><select name="kelas" disabled>
+                        <option value="${item.kelas}" selected>${item.kelas}</option>
+                    </select></td>
+                    <td><input type="date" name="tanggal" value="${item.tanggal}" disabled></td>
+                    <td><input type="text" name="pelanggaran" value="${item.pelanggaran}" disabled></td>
+                    <td><select name="keterangan" disabled>
+                        <option value="${item.keterangan}" selected>${item.keterangan}</option>
+                    </select></td>
+                    <td><select name="guru" disabled>
+                        <option value="${item.guru}" selected>${item.guru}</option>
+                    </select></td>
+                    <td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>
+                `;
+            });
+        };
     }
-}
 
-function goToAnotherPage() {
-    window.location.href = "hal2.html";
-}
+    function deleteData(id) {
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.delete(id);
+
+        request.onsuccess = function() {
+            alert("Data berhasil dihapus!");
+            loadData();
+        };
+    }
+
+    function confirmDelete(event) {
+        if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
+            const row = event.target.closest("tr");
+            row.remove();
+        }
+    }
+
+    function goToAnotherPage() {
+        window.location.href = "hal2.html";
+    }
 </script>
 
 </body>

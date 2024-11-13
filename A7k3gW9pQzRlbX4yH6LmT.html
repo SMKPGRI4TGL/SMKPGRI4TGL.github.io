@@ -5,40 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Pelanggaran Siswa</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        input[type="text"], input[type="date"], select {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        .add-row-btn {
-            margin-top: 10px;
-        }
-        .delete-btn {
-            color: red;
-            cursor: pointer;
-        }
-        .pergi {
-            color: white;
-            cursor: pointer;
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-            background-color: #ff0000;
-        }
-    </style>
 </head>
 <body>
 
@@ -47,6 +13,7 @@
 <table id="dataTable">
     <thead>
         <tr>
+            <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
             <th>Nama</th>
             <th>Kelas</th>
             <th>Tanggal</th>
@@ -58,6 +25,7 @@
     </thead>
     <tbody>
         <tr>
+            <td><input type="checkbox" class="checkbox"></td>
             <td><input type="text" name="nama" placeholder="Nama"></td>
             <td>
                 <select name="kelas">
@@ -90,7 +58,9 @@
                     <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
                 </select>
             </td>
-            <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
+            <td>
+                <button class="delete-btn" onclick="confirmDelete(event)">Hapus</button>
+            </td>
         </tr>
     </tbody>
 </table>
@@ -99,8 +69,11 @@
     <button class="add-row-btn" onclick="addRow()">Tambah</button>
     <button class="save-btn" onclick="saveData()">Simpan</button>
     <button class="pergi" onclick="goToAnotherPage()">Kembali</button>
+    <button class="upload-btn" onclick="uploadData()">Unggah Data</button>
+    <button class="delete-selected-btn" onclick="deleteSelected()">Hapus yang Ditandai</button>
 </div>
 
+<div class="popup-notification" id="popupNotification"></div>
 
 <script>
     let db;
@@ -131,6 +104,7 @@
         const newRow = table.insertRow();
         
         newRow.innerHTML = `
+            <td><input type="checkbox" class="checkbox"></td>
             <td><input type="text" name="nama" placeholder="Nama"></td>
             <td>
                 <select name="kelas">
@@ -163,50 +137,43 @@
                     <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
                 </select>
             </td>
-            <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
+            <td>
+                <button class="delete-btn" onclick="confirmDelete(event)">Hapus</button>
+            </td>
         `;
     }
 
     function saveData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
         const rows = table.rows;
-        
+
         for (let i = 0; i < rows.length; i++) {
             const row = rows[i];
-            const nama = row.cells[0].children[0].value;
-            const kelas = row.cells[1].children[0].value;
-            const tanggal = row.cells[2].children[0].value;
-            const pelanggaran = row.cells[3].children[0].value;
-            const keterangan = row.cells[4].children[0].value;
-            const guru = row.cells[5].children[0].value;
+            const nama = row.cells[1].children[0].value;
+            const kelas = row.cells[2].children[0].value;
+            const tanggal = row.cells[3].children[0].value;
+            const pelanggaran = row.cells[4].children[0].value;
+            const keterangan = row.cells[5].children[0].value;
+            const guru = row.cells[6].children[0].value;
 
             if (nama && kelas && tanggal && pelanggaran && keterangan && guru) {
                 const transaction = db.transaction(["pelanggaran"], "readwrite");
                 const objectStore = transaction.objectStore("pelanggaran");
 
-                const data = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
-
-                const request = objectStore.index("tanggal").openCursor();
-                request.onsuccess = function(event) {
-                    const cursor = event.target.result;
-                    let isDuplicate = false;
-                    if (cursor) {
-                        const existingData = cursor.value;
-                        if (existingData.nama === nama &&
-                            existingData.kelas === kelas &&
-                            existingData.tanggal === tanggal &&
-                            existingData.pelanggaran === pelanggaran &&
-                            existingData.keterangan === keterangan &&
-                            existingData.guru === guru) {
-                                objectStore.delete(existingData.id);
-                                isDuplicate = true;
-                        }
-                        cursor.continue();
+                // Membuat filter untuk menemukan data yang sama persis
+                const indexNama = objectStore.index("nama");
+                indexNama.get(nama).onsuccess = function(event) {
+                    const existingData = event.target.result;
+                    if (existingData) {
+                        // Jika data sudah ada, lakukan update dan beri notifikasi
+                        const updatedData = { ...existingData, kelas, tanggal, pelanggaran, keterangan, guru };
+                        objectStore.put(updatedData);
+                        showPopupNotification('Duplikasi data berhasil digantikan', true);
                     } else {
-                        if (!isDuplicate) {
-                            objectStore.add(data);
-                            alert("Data berhasil disimpan!");
-                        }
+                        // Jika data tidak ada, tambahkan data baru
+                        const newData = { nama, kelas, tanggal, pelanggaran, keterangan, guru };
+                        objectStore.add(newData);
+                        showPopupNotification(`Data '${nama}' telah disimpan`, false);
                     }
                 };
             }
@@ -214,9 +181,134 @@
     }
 
     function confirmDelete(event) {
+        const row = event.target.closest('tr');
+        const nama = row.cells[1].children[0].value;
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+
+        objectStore.index("nama").get(nama).onsuccess = function(event) {
+            const dataToDelete = event.target.result;
+            if (dataToDelete) {
+                objectStore.delete(dataToDelete.id);
+                row.remove();
+                showPopupNotification(`Data '${nama}' telah dihapus`, true);
+            }
+        };
+    }
+
+    function deleteSelected() {
+        const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        const rows = table.rows;
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const checkbox = row.cells[0].children[0];
+            if (checkbox.checked) {
+                const nama = row.cells[1].children[0].value;
+                const transaction = db.transaction(["pelanggaran"], "readwrite");
+                const objectStore = transaction.objectStore("pelanggaran");
+
+                objectStore.index("nama").get(nama).onsuccess = function(event) {
+                    const dataToDelete = event.target.result;
+                    if (dataToDelete) {
+                        objectStore.delete(dataToDelete.id);
+                        row.remove();
+                    }
+                };
+            }
+        }
+    }
+
+    function showPopupNotification(message, isError) {
+        const popup = document.getElementById("popupNotification");
+        popup.textContent = message;
+        popup.classList.toggle('error', isError);
+        popup.style.display = 'block';
+        setTimeout(() => {
+            popup.style.opacity = 0;
+            setTimeout(() => {
+                popup.style.display = 'none';
+                popup.style.opacity = 1;
+            }, 500);
+        }, 300);
+    }
+
+    function confirmDelete(event) {
         if (confirm("Apakah Anda yakin ingin menghapus baris ini?")) {
             const row = event.target.closest("tr");
             row.remove();
+        }
+    }
+
+    function uploadData() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.json';
+        input.onchange = function (event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = JSON.parse(e.target.result);
+                const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+                data.forEach(item => {
+                    const newRow = table.insertRow();
+                    newRow.innerHTML = `
+                        <td><input type="checkbox" class="checkbox"></td>
+                        <td><input type="text" name="nama" value="${item.nama}" placeholder="Nama"></td>
+                        <td><select name="kelas">
+                            <option value="${item.kelas}" selected>${item.kelas}</option>
+                            <option value="10 RPL">10 RPL</option>
+                            <option value="10 PM">10 PM</option>
+                            <option value="10 TB">10 TB</option>
+                            <option value="11 RPL">11 RPL</option>
+                            <option value="11 PM">11 PM</option>
+                            <option value="11 TB">11 TB</option>
+                            <option value="12 RPL 1">12 RPL 1</option>
+                            <option value="12 RPL 2">12 RPL 2</option>
+                            <option value="12 PM">12 PM</option>
+                            <option value="12 TB">12 TB</option>
+                        </select></td>
+                        <td><input type="date" name="tanggal" value="${item.tanggal}"></td>
+                        <td><input type="text" name="pelanggaran" value="${item.pelanggaran}" placeholder="Pelanggaran"></td>
+                        <td><select name="keterangan">
+                            <option value="${item.keterangan}" selected>${item.keterangan}</option>
+                            <option value="Pembinaan">Pembinaan</option>
+                            <option value="Konsekuensi">Konsekuensi</option>
+                        </select></td>
+                        <td><select name="guru">
+                            <option value="${item.guru}" selected>${item.guru}</option>
+                            <option value="PAK.UBAI">PAK.UBAI</option>
+                            <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
+                        </select></td>
+                        <td><button class="delete-btn" onclick="confirmDelete(event)">Hapus</button></td>
+                    `;
+                });
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function toggleSelectAll() {
+        const selectAllCheckbox = document.getElementById("selectAll");
+        const checkboxes = document.querySelectorAll(".checkbox");
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+
+    function deleteSelected() {
+        const checkboxes = document.querySelectorAll(".checkbox:checked");
+        if (checkboxes.length === 0) {
+            alert("Tidak ada data yang dipilih.");
+            return;
+        }
+
+        if (confirm("Apakah Anda yakin ingin menghapus data yang ditandai?")) {
+            checkboxes.forEach(checkbox => {
+                const row = checkbox.closest("tr");
+                row.remove();
+            });
         }
     }
 

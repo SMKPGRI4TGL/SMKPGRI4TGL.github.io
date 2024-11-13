@@ -5,42 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Pelanggaran - Halaman Muat Data</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        .delete-btn {
-            color: red;
-            cursor: pointer;
-        }
-        .back-btn {
-            width: 100%;
-            padding: 8px;
-            color: white;
-            background-color: #4CAF50;
-            border: none;
-            cursor: pointer;
-            box-sizing: border-box;
-            margin-top: 10px;
-        }
-    </style>
 </head>
 <body>
 
 <h2>Data Pelanggaran Siswa - Halaman Muat Data</h2>
+<div id="loading-indicator">Memuat data...</div>
 
 <table id="dataTable">
     <thead>
         <tr>
+            <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll()"></th>
             <th>Nama</th>
             <th>Kelas</th>
             <th>Tanggal</th>
@@ -56,12 +30,20 @@
 </table>
 
 <div class="button-container">
-<button class="back-btn" onclick="goBack()">Kembali</button>
+    <button class="back-btn" onclick="goBack()">Kembali</button>
+    <button class="download-all-btn" onclick="downloadAll()">Unduh Semua</button>
+    <button class="delete-selected-btn" onclick="confirmDeleteSelected()" id="deleteSelectedBtn" style="display: none;">Hapus yang Ditandai</button>
 </div>
 
 <script>
     let db;
     const request = indexedDB.open("PelanggaranDB", 1);
+
+    request.onupgradeneeded = function(event) {
+        db = event.target.result;
+        const objectStore = db.createObjectStore("pelanggaran", { keyPath: "id", autoIncrement: true });
+        objectStore.createIndex("uniqueKey", ["nama", "kelas", "tanggal", "pelanggaran"], { unique: true });
+    };
 
     request.onerror = function(event) {
         console.log("Gagal membuka IndexedDB");
@@ -73,27 +55,68 @@
         loadData();
     };
 
+    function addData(newData) {
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+
+        // Buat kunci unik untuk deteksi duplikasi
+        const uniqueKey = [newData.nama, newData.kelas, newData.tanggal, newData.pelanggaran];
+        const index = objectStore.index("uniqueKey");
+
+        // Cek apakah data dengan kunci unik tersebut sudah ada
+        const checkRequest = index.get(uniqueKey);
+
+        checkRequest.onsuccess = function(event) {
+            if (event.target.result) {
+                // Data duplikat ditemukan, update data yang ada
+                newData.id = event.target.result.id; // Pertahankan ID lama agar terjadi update
+                objectStore.put(newData);
+                console.log("Data duplikat ditemukan, data diperbarui.");
+            } else {
+                // Jika tidak ada data duplikat, tambahkan data baru
+                objectStore.add(newData);
+                console.log("Data baru ditambahkan.");
+            }
+        };
+
+        checkRequest.onerror = function(event) {
+            console.log("Terjadi kesalahan saat memeriksa duplikasi data.");
+        };
+    }
+
     function loadData() {
         const table = document.getElementById("dataTable").getElementsByTagName("tbody")[0];
+        document.getElementById("loading-indicator").style.display = "block";
         const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
         const request = objectStore.getAll();
 
         request.onsuccess = function(event) {
             const data = event.target.result;
-            table.innerHTML = ""; 
+            table.innerHTML = "";
             data.forEach(item => {
                 const newRow = table.insertRow();
                 newRow.innerHTML = `
+                    <td><input type="checkbox" class="checkbox" data-id="${item.id}" onclick="toggleDeleteButton()"></td>
                     <td>${item.nama}</td>
                     <td>${item.kelas}</td>
                     <td>${item.tanggal}</td>
                     <td>${item.pelanggaran}</td>
                     <td>${item.keterangan}</td>
                     <td>${item.guru}</td>
-                    <td><button class="delete-btn" onclick="deleteData(${item.id})">Hapus</button></td>
+                    <td>
+                        <button class="delete-btn" onclick="confirmDelete(${item.id})">Hapus</button>
+                        <button class="download-btn" onclick="downloadData(${item.id})">Unduh</button>
+                    </td>
                 `;
             });
+            document.getElementById("loading-indicator").style.display = "none";
         };
+    }
+
+    function confirmDelete(id) {
+        if (confirm("Apakah Anda yakin ingin menghapus data ini?")) {
+            deleteData(id);
+        }
     }
 
     function deleteData(id) {
@@ -103,8 +126,75 @@
 
         request.onsuccess = function() {
             alert("Data berhasil dihapus!");
-            loadData(); // Muat ulang data setelah menghapus
+            loadData();
         };
+    }
+
+    function downloadData(id) {
+        const transaction = db.transaction("pelanggaran");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.get(id);
+
+        request.onsuccess = function(event) {
+            const data = event.target.result;
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `pelanggaran_${data.id}.json`;
+            link.click();
+        };
+    }
+
+    function downloadAll() {
+        const transaction = db.transaction("pelanggaran");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.getAll();
+
+        request.onsuccess = function(event) {
+            const data = event.target.result;
+            const blob = new Blob([JSON.stringify(data)], { type: "application/json" });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "semua_pelanggaran.json";
+            link.click();
+        };
+    }
+
+    function toggleSelectAll() {
+        const checkboxes = document.querySelectorAll('.checkbox');
+        const selectAll = document.getElementById('selectAll').checked;
+        checkboxes.forEach(checkbox => checkbox.checked = selectAll);
+        toggleDeleteButton();
+    }
+
+    function toggleDeleteButton() {
+        const selectedCheckboxes = document.querySelectorAll('.checkbox:checked');
+        const deleteSelectedBtn = document.getElementById('deleteSelectedBtn');
+        deleteSelectedBtn.style.display = selectedCheckboxes.length > 0 ? 'block' : 'none';
+    }
+
+    function confirmDeleteSelected() {
+        if (confirm("Apakah Anda yakin ingin menghapus data yang ditandai?")) {
+            deleteSelected();
+        }
+    }
+
+    function deleteSelected() {
+        const selectedCheckboxes = document.querySelectorAll('.checkbox:checked');
+        const idsToDelete = Array.from(selectedCheckboxes).map(checkbox => checkbox.getAttribute('data-id'));
+
+        if (idsToDelete.length > 0) {
+            const transaction = db.transaction(["pelanggaran"], "readwrite");
+            const objectStore = transaction.objectStore("pelanggaran");
+
+            idsToDelete.forEach(id => {
+                const request = objectStore.delete(Number(id));
+                request.onsuccess = function() {
+                    console.log("Data yang ditandai berhasil dihapus!");
+                    loadData();
+                };
+            });
+        }
     }
 
     function goBack() {

@@ -1,7 +1,7 @@
 /* Mengatur gaya dasar untuk elemen body */
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f4f4f9;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fc;
     margin: 0;
     padding: 0;
     color: #333;
@@ -10,8 +10,10 @@ body {
 /* Gaya untuk judul halaman */
 h2 {
     text-align: center;
-    margin-top: 20px;
+    margin-top: 30px;
     color: #333;
+    font-size: 24px;
+    font-weight: 600;
 }
 
 /* Mengatur tampilan tabel */
@@ -20,122 +22,196 @@ table {
     margin: 20px auto;
     border-collapse: collapse;
     background-color: #fff;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
 }
 
 th, td {
-    padding: 12px;
+    padding: 15px;
     text-align: left;
-    border-bottom: 1px solid #ddd;
+    border-bottom: 1px solid #e0e0e0;
 }
 
 th {
-    background-color: #0052cc;
+    background: linear-gradient(45deg, #007bff, #0056b3);
     color: #fff;
-    text-align: center;
-    font-weight: bold;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 tr:hover {
-    background-color: #f1f1f1;
+    background-color: #f1f9ff;
 }
 
 /* Gaya input teks dan dropdown */
 input[type="text"], input[type="date"], select {
     width: 100%;
-    padding: 8px;
-    margin: 5px 0;
+    padding: 12px;
+    margin: 8px 0;
     box-sizing: border-box;
     border: 1px solid #ddd;
-    border-radius: 4px;
-    background-color: #fafafa;
+    border-radius: 8px;
+    background-color: #f7f7f7;
+    font-size: 16px;
 }
 
-/* Mengatur tata letak tombol */
+input[type="text"]:focus, input[type="date"]:focus, select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+
+/* Gaya untuk tombol kontainer */
 .button-container {
     display: flex;
-    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
     width: 90%;
     margin: 20px auto;
 }
 
-/* Gaya untuk tombol "Tambah Daftar" di kiri */
-button.add-row-btn {
+/* Gaya umum untuk semua tombol */
+.button-container button {
     flex: 1;
-    background-color: #0052cc; /* Biru */
-    color: #fff;
-    padding: 12px;
-    margin-right: 10px;
+    padding: 14px;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 16px;
-}
-
-button.add-row-btn:hover {
-    background-color: #003d99;
-}
-
-/* Gaya untuk tombol "Simpan" di tengah */
-button.save-btn {
-    flex: 1;
-    background-color: #28a745; /* Hijau */
+    font-weight: bold;
+    transition: background 0.3s, transform 0.2s;
     color: #fff;
-    padding: 12px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
 }
 
-button.save-btn:hover {
-    background-color: #218838;
+/* Gaya untuk tombol dengan gradasi modern */
+.add-row-btn {
+    background: linear-gradient(45deg, #007bff, #0056b3);
 }
 
-/* Gaya untuk tombol "Kembali" di kanan */
-button.pergi {
-    flex: 1;
-    background-color: #dc3545; /* Merah */
-    color: #fff;
-    padding: 12px;
-    margin-left: 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
+.save-btn {
+    background: linear-gradient(45deg, #28a745, #218838);
 }
 
-button.pergi:hover {
-    background-color: #c82333;
+.pergi {
+    background: linear-gradient(45deg, #dc3545, #c82333);
 }
 
-button.back-btn {
-    flex: 1;
-    background-color: #28a745; /* Hijau */
-    color: #fff;
-    padding: 12px;
-    margin: 0 10px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 16px;
+.download-all-btn, .upload-btn {
+    background: linear-gradient(45deg, #20c997, #198754);
 }
 
-button.back-btn:hover {
-    background-color: #218838;
+.back-btn {
+    background: linear-gradient(45deg, #ffc107, #d39e00);
+}
+
+/* Efek hover dan klik */
+.button-container button:hover {
+    background-size: 200%;
+    transform: translateY(-2px);
+}
+
+.button-container button:active {
+    transform: translateY(0);
 }
 
 /* Gaya tombol hapus */
 button.delete-btn {
-    color: #ff4d4d;
+    color: #e74c3c;
     background: none;
     border: none;
     cursor: pointer;
-    font-weight: bold;
+    font-weight: 600;
+    transition: color 0.3s, text-decoration 0.3s;
 }
 
 button.delete-btn:hover {
-    color: #cc0000;
+    color: #c0392b;
     text-decoration: underline;
 }
+
+/* Gaya tambahan untuk tombol dan checkbox */
+.delete-btn, .download-btn {
+    cursor: pointer;
+}
+
+.download-btn {
+    color: #007bff;
+    margin-left: 8px;
+    font-weight: bold;
+}
+
+.checkbox {
+    width: 20px;
+    height: 20px;
+}
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 10px;
+            text-align: left;
+        }
+        input[type="text"], input[type="date"], select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+        .add-row-btn {
+            margin-top: 10px;
+        }
+        .delete-btn, .download-btn {
+            color: red;
+            cursor: pointer;
+        }
+        .download-btn {
+            color: blue;
+            margin-left: 5px;
+        }
+        .pergi {
+            color: white;
+            cursor: pointer;
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+            background-color: #ff0000;
+        }
+        .checkbox {
+            width: 20px;
+            height: 20px;
+        }
+        .button-container {
+            margin-top: 20px;
+        }
+        .delete-selected-btn {
+            width: 100%;
+            padding: 8px;
+            color: white;
+            background-color: #FF5733;
+            border: none;
+            cursor: pointer;
+            box-sizing: border-box;
+            margin-top: 10px;
+        }
+        .popup-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.5s ease-out;
+        }
+        .popup-notification.error {
+            background-color: #f44336;
+        }

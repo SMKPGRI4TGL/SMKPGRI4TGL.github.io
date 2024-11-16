@@ -35,6 +35,8 @@
     <button class="delete-selected-btn" onclick="confirmDeleteSelected()" id="deleteSelectedBtn" style="display: none;">Hapus yang Ditandai</button>
 </div>
 
+<div class="popup" id="popup">Data berhasil diubah</div>
+
 <script>
     let db;
     const request = indexedDB.open("PelanggaranDB", 1);
@@ -59,21 +61,17 @@
         const transaction = db.transaction(["pelanggaran"], "readwrite");
         const objectStore = transaction.objectStore("pelanggaran");
 
-        // Buat kunci unik untuk deteksi duplikasi
         const uniqueKey = [newData.nama, newData.kelas, newData.tanggal, newData.pelanggaran];
         const index = objectStore.index("uniqueKey");
 
-        // Cek apakah data dengan kunci unik tersebut sudah ada
         const checkRequest = index.get(uniqueKey);
 
         checkRequest.onsuccess = function(event) {
             if (event.target.result) {
-                // Data duplikat ditemukan, update data yang ada
-                newData.id = event.target.result.id; // Pertahankan ID lama agar terjadi update
+                newData.id = event.target.result.id;
                 objectStore.put(newData);
                 console.log("Data duplikat ditemukan, data diperbarui.");
             } else {
-                // Jika tidak ada data duplikat, tambahkan data baru
                 objectStore.add(newData);
                 console.log("Data baru ditambahkan.");
             }
@@ -97,13 +95,40 @@
                 const newRow = table.insertRow();
                 newRow.innerHTML = `
                     <td><input type="checkbox" class="checkbox" data-id="${item.id}" onclick="toggleDeleteButton()"></td>
-                    <td>${item.nama}</td>
-                    <td>${item.kelas}</td>
-                    <td>${item.tanggal}</td>
-                    <td>${item.pelanggaran}</td>
-                    <td>${item.keterangan}</td>
-                    <td>${item.guru}</td>
+                    <td><input type="text" name="nama" value="${item.nama}" placeholder="Nama"></td>
                     <td>
+                        <select name="kelas">
+                            <option value="${item.kelas}" selected>${item.kelas}</option>
+                            <option value="10 RPL">10 RPL</option>
+                            <option value="10 PM">10 PM</option>
+                            <option value="10 TB">10 TB</option>
+                            <option value="11 RPL">11 RPL</option>
+                            <option value="11 PM">11 PM</option>
+                            <option value="11 TB">11 TB</option>
+                            <option value="12 RPL 1">12 RPL 1</option>
+                            <option value="12 RPL 2">12 RPL 2</option>
+                            <option value="12 PM">12 PM</option>
+                            <option value="12 TB">12 TB</option>
+                        </select>
+                    </td>
+                    <td><input type="date" name="tanggal" value="${item.tanggal}"></td>
+                    <td><input type="text" name="pelanggaran" value="${item.pelanggaran}" placeholder="Pelanggaran"></td>
+                    <td>
+                        <select name="keterangan">
+                            <option value="${item.keterangan}" selected>${item.keterangan}</option>
+                            <option value="Pembinaan">Pembinaan</option>
+                            <option value="Konsekuensi">Konsekuensi</option>
+                        </select>
+                    </td>
+                    <td>
+                        <select name="guru">
+                            <option value="${item.guru}" selected>${item.guru}</option>
+                            <option value="PAK.UBAI">PAK.UBAI</option>
+                            <option value="PAK.JUNAEDI">PAK.JUNAEDI</option>
+                        </select>
+                    </td>
+                    <td>
+                        <button class="save-btn" onclick="saveData(${item.id}, this)">Simpan</button>
                         <button class="delete-btn" onclick="confirmDelete(${item.id})">Hapus</button>
                         <button class="download-btn" onclick="downloadData(${item.id})">Unduh</button>
                     </td>
@@ -111,6 +136,36 @@
             });
             document.getElementById("loading-indicator").style.display = "none";
         };
+    }
+
+    function saveData(id, button) {
+        const row = button.parentElement.parentElement;
+        const updatedData = {
+            id: id,
+            nama: row.cells[1].children[0].value,
+            kelas: row.cells[2].children[0].value,
+            tanggal: row.cells[3].children[0].value,
+            pelanggaran: row.cells[4].children[0].value,
+            keterangan: row.cells[5].children[0].value,
+            guru: row.cells[6].children[0].value
+        };
+
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+        objectStore.put(updatedData);
+
+        transaction.oncomplete = function() {
+            showPopup("Data berhasil diubah");
+        };
+    }
+
+    function showPopup(message) {
+        const popup = document.getElementById("popup");
+        popup.textContent = message;
+        popup.style.display = "block";
+        setTimeout(() => {
+            popup.style.display = "none";
+        }, 1500);
     }
 
     function confirmDelete(id) {
@@ -191,9 +246,13 @@
                 const request = objectStore.delete(Number(id));
                 request.onsuccess = function() {
                     console.log("Data yang ditandai berhasil dihapus!");
-                    loadData();
                 };
             });
+
+            transaction.oncomplete = function() {
+                loadData();
+                alert("Data yang ditandai berhasil dihapus!");
+            };
         }
     }
 

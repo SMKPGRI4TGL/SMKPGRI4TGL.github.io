@@ -4,100 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #f8f9fa;
-            color: #333;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .dashboard-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            padding: 40px;
-            flex: 1;
-        }
-        .content {
-            text-align: center;
-            padding: 30px;
-            background-color: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-            width: 70%;
-            max-width: 800px;
-        }
-        h2 {
-            margin-bottom: 20px;
-            color: #4CAF50;
-            font-weight: bold;
-        }
-        .search-container {
-            display: flex;
-            justify-content: space-between;
-            gap: 10px;
-            width: 100%;
-            margin-bottom: 20px;
-        }
-        input[type="text"] {
-            padding: 10px;
-            width: 100%;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-            box-sizing: border-box;
-        }
-        .search-container button, .load-data-button {
-            padding: 10px;
-            width: 100%;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-            transition: background-color 0.3s;
-        }
-        .search-container button:hover, .load-data-button:hover {
-            background-color: #45a049;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            display: none;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-        }
-        th, td {
-            padding: 10px;
-            text-align: left;
-        }
-        a {
-            color: #4CAF50;
-            text-decoration: none;
-            font-size: 16px;
-            margin-top: 20px;
-            display: inline-block;
-        }
-        .full-screen-image {
-            width: 100%;
-            height: 100vh;
-            background-image: url('logo.png');
-            background-size: cover;
-            background-position: center;
-            position: fixed;
-            top: 0;
-            left: 0;
-            z-index: -1;
-            opacity: 0.5;
-        }
-    </style>
+    <link rel="stylesheet" href="style1.css">
 </head>
 <body>
 
@@ -108,11 +15,12 @@
         <h2>Data Pelanggaran Siswa/Siswi</h2>
         <p>Anda berhasil login.</p>
 
-        <div class="search-container">
-            <button onclick="searchData()">Cari</button>
-            <input type="text" id="searchInput" placeholder="Cari Nama Siswa...">
-            <button onclick="goToAnotherPage()">TAMBAH CATATAN</button>
-        </div>
+<div class="search-container">
+    <button onclick="searchData()">Cari</button>
+    <input type="text" id="searchInput" placeholder="Cari Nama Siswa...">
+    <button onclick="goToAnotherPage()">TAMBAH CATATAN</button>
+</div>
+<div id="totalPelanggaran" style="margin-top: 10px; font-weight: bold;"></div>
 
         <table id="pelanggaranTable">
             <thead>
@@ -123,6 +31,7 @@
                     <th>Pelanggaran</th>
                     <th>Keterangan</th>
                     <th>Guru</th>
+                    <th>Aksi</th>
                 </tr>
             </thead>
             <tbody></tbody>
@@ -133,10 +42,13 @@
     </div>
 </div>
 
+<div class="popup-message" id="popupMessage">Data berhasil diubah</div>
+
 <script>
     const searchInput = document.getElementById('searchInput');
     const pelanggaranTable = document.getElementById('pelanggaranTable').getElementsByTagName('tbody')[0];
     const pelanggaranTableContainer = document.getElementById('pelanggaranTable');
+    const popupMessage = document.getElementById('popupMessage');
 
     let db;
     const request = indexedDB.open("PelanggaranDB", 1);
@@ -161,34 +73,147 @@
         objectStore.createIndex("guru", "guru", { unique: false });
     };
 
-    function searchData() {
-        const searchTerm = searchInput.value.toLowerCase();
-        const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
-        const request = objectStore.getAll();
+function searchData() {
+    const searchTerm = searchInput.value.toLowerCase();
+    const objectStore = db.transaction("pelanggaran").objectStore("pelanggaran");
+    const request = objectStore.getAll();
 
-        request.onsuccess = function(event) {
-            const data = event.target.result;
-            pelanggaranTable.innerHTML = "";
-            let hasResults = false;
-            
-            data.forEach(item => {
-                const nama = item.nama.toLowerCase();
-                if (nama.includes(searchTerm)) {
-                    hasResults = true;
-                    const newRow = pelanggaranTable.insertRow();
-                    newRow.innerHTML = `
-                        <td>${item.nama}</td>
-                        <td>${item.kelas}</td>
-                        <td>${item.tanggal}</td>
-                        <td>${item.pelanggaran}</td>
-                        <td>${item.keterangan}</td>
-                        <td>${item.guru}</td>
-                    `;
+    request.onsuccess = function(event) {
+        const data = event.target.result;
+        pelanggaranTable.innerHTML = "";
+        let hasResults = false;
+        let totalPelanggaran = 0;
+
+        data.forEach(item => {
+            const nama = item.nama.toLowerCase();
+            if (nama.includes(searchTerm)) {
+                hasResults = true;
+                totalPelanggaran += 1;  // Tambahkan ke total pelanggaran
+                const newRow = pelanggaranTable.insertRow();
+                newRow.innerHTML = `
+                    <td onclick="makeEditable(this)">${item.nama}</td>
+                    <td onclick="makeEditable(this)">${item.kelas}</td>
+                    <td onclick="makeEditable(this)">${item.tanggal}</td>
+                    <td onclick="makeEditable(this)">${item.pelanggaran}</td>
+                    <td onclick="makeEditable(this)">${item.keterangan}</td>
+                    <td onclick="makeEditable(this)">${item.guru}</td>
+                    <td>
+                        <button class="save-btn" onclick="saveData(${item.id}, this)">Simpan</button>
+                        <button class="delete-btn" onclick="confirmDelete(${item.id})">Hapus</button>
+                    </td>
+                `;
+            }
+        });
+
+        // Tampilkan jumlah pelanggaran atau sembunyikan jika tidak ada hasil
+        const totalPelanggaranDiv = document.getElementById("totalPelanggaran");
+        if (hasResults) {
+            totalPelanggaranDiv.innerText = `Jumlah pelanggaran yang dilakukan: ${totalPelanggaran}`;
+            pelanggaranTableContainer.style.display = "table";
+        } else {
+            totalPelanggaranDiv.innerText = "Tidak ada hasil untuk nama yang dicari.";
+            pelanggaranTableContainer.style.display = "none";
+        }
+    };
+}
+
+    function makeEditable(cell) {
+        if (!cell.querySelector("input, select")) {
+            const originalValue = cell.innerText;
+            let inputElement;
+
+            if (cell.cellIndex === 1 || cell.cellIndex === 4 || cell.cellIndex === 5) { // Kelas, Keterangan, atau Guru
+                inputElement = document.createElement("select");
+                if (cell.cellIndex === 1) {
+                    ["Pilih Kelas", "10 RPL", "10 PM", "10 TB", "11 RPL", "11 PM", "11 TB", "12 RPL 1", "12 RPL 2", "12 PM", "12 TB"]
+                        .forEach(opt => {
+                            const option = document.createElement("option");
+                            option.value = opt;
+                            option.text = opt;
+                            inputElement.add(option);
+                        });
+                } else if (cell.cellIndex === 4) {
+                    ["Pilih Keterangan", "Pembinaan", "Konsekuensi"].forEach(opt => {
+                        const option = document.createElement("option");
+                        option.value = opt;
+                        option.text = opt;
+                        inputElement.add(option);
+                    });
+                } else if (cell.cellIndex === 5) { // Guru
+                    ["Pilih Guru", "PAK.UBAI", "PAK.JUNAEDI"].forEach(opt => {
+                        const option = document.createElement("option");
+                        option.value = opt;
+                        option.text = opt;
+                        inputElement.add(option);
+                    });
                 }
+                inputElement.value = originalValue;
+            } else {
+                inputElement = document.createElement("input");
+                inputElement.type = cell.cellIndex === 2 ? "date" : "text";
+                inputElement.value = originalValue;
+            }
+
+            cell.innerHTML = "";
+            cell.appendChild(inputElement);
+            inputElement.focus();
+            inputElement.addEventListener("blur", () => {
+                cell.innerText = inputElement.value || originalValue;
             });
-            
-            pelanggaranTableContainer.style.display = hasResults ? "table" : "none";
+        }
+    }
+
+    function confirmDelete(id) {
+        if (confirm("Apakah ingin menghapus data ini?")) {
+            deleteData(id);
+        }
+    }
+
+    function saveData(id, buttonElement) {
+        const row = buttonElement.parentElement.parentElement;
+        const updatedData = {
+            id: id,
+            nama: row.cells[0].innerText,
+            kelas: row.cells[1].innerText,
+            tanggal: row.cells[2].innerText,
+            pelanggaran: row.cells[3].innerText,
+            keterangan: row.cells[4].innerText,
+            guru: row.cells[5].innerText
         };
+
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.put(updatedData);
+
+        request.onsuccess = function() {
+            showPopup("Data berhasil diubah");
+            row.cells[6].innerHTML = ''; // Kosongkan kolom aksi
+            setTimeout(() => {
+                row.cells[6].innerHTML = `
+                    <button class="save-btn" onclick="saveData(${id}, this)">Simpan</button>
+                    <button class="delete-btn" onclick="confirmDelete(${id})">Hapus</button>
+                `;
+            }, 1500);
+        };
+    }
+    
+    function deleteData(id) {
+        const transaction = db.transaction(["pelanggaran"], "readwrite");
+        const objectStore = transaction.objectStore("pelanggaran");
+        const request = objectStore.delete(id);
+
+        request.onsuccess = function() {
+            alert("Data berhasil dihapus!");
+            searchData();
+        };
+    }
+
+    function showPopup(message) {
+        popupMessage.innerText = message;
+        popupMessage.style.display = "block";
+        setTimeout(() => {
+            popupMessage.style.display = "none";
+        }, 1500);
     }
 
     function goToAnotherPage() {
